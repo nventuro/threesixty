@@ -14,3 +14,19 @@ arm-none-eabi-gcc (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (releas
 $ openocd --version
 Open On-Chip Debugger 0.10.0-dev-00329-gf19ac83
 ```
+
+### Build instructions
+First, StellarisWare must be built:
+
+```
+cd stellarisware
+./compile.sh
+````
+
+Then, the display subproject can be built and downloaded to the target board:
+
+```
+cd display
+./compile.sh
+./download.sh
+```
