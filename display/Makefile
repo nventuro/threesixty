@@ -6,23 +6,25 @@ ROOT=../stellarisware
 
 COMPILER=gcc
 
+OUT_DIR=out
+
 # The prefix for the tools to use
 PREFIX=arm-none-eabi
 
-# The command for calling the compiler.
+# The command for calling the compiler
 CC=${PREFIX}-gcc
 
-# Determine the compiler CPU/FPU options based on the processor variant.
+# The compiler CPU/FPU options
 CPU=-mcpu=cortex-m4
 FPU=-mfpu=fpv4-sp-d16 -mfloat-abi=softfp
 
-# The flags passed to the assembler.
+# The flags passed to the assembler
 AFLAGS=-mthumb \
        ${CPU}  \
        ${FPU}  \
        -MD
 
-# The flags passed to the compiler.
+# The flags passed to the compiler
 CFLAGS=-mthumb             \
        ${CPU}              \
        ${FPU}              \
@@ -36,57 +38,39 @@ CFLAGS=-mthumb             \
        -DPART_${PART}      \
        -c
 
-# The command for calling the library archiver.
-AR=${PREFIX}-ar
 
-# The command for calling the linker.
-LD=${PREFIX}-ld
-
-# The flags passed to the linker.
-LDFLAGS=--gc-sections
-
-# Get the location of libgcc.a from the GCC front-end.
-LIBGCC=${shell ${CC} ${CFLAGS} -print-libgcc-file-name}
-
-# Get the location of libc.a from the GCC front-end.
-LIBC=${shell ${CC} ${CFLAGS} -print-file-name=libc.a}
-
-# Get the location of libm.a from the GCC front-end.
-LIBM=${shell ${CC} ${CFLAGS} -print-file-name=libm.a}
-
-# The command for extracting images from the linked executables.
-OBJCOPY=${PREFIX}-objcopy
-
-# Tell the compiler to include debugging information if the DEBUG environment
-# variable is set.
+# Tell the compiler to include debugging information if the DEBUG environment variable is set
 ifdef DEBUG
 CFLAGS+=-g -D DEBUG
 endif
 
-# Add the tool specific CFLAGS.
+# The command for calling the library archiver
+AR=${PREFIX}-ar
+
+# The command for calling the linker
+LD=${PREFIX}-ld
+
+# The flags passed to the linker
+LDFLAGS=--gc-sections
+
+# Get the location of libgcc.a from the GCC front-end
+LIBGCC=${shell ${CC} ${CFLAGS} -print-libgcc-file-name}
+
+# Get the location of libc.a from the GCC front-end
+LIBC=${shell ${CC} ${CFLAGS} -print-file-name=libc.a}
+
+# Get the location of libm.a from the GCC front-end
+LIBM=${shell ${CC} ${CFLAGS} -print-file-name=libm.a}
+
+# The command for extracting images from the linked executables
+OBJCOPY=${PREFIX}-objcopy
+
+# Add the tool specific CFLAGS
 CFLAGS+=${CFLAGSgcc}
 
-# Add the include file paths to AFLAGS and CFLAGS.
+# Add the include file paths to AFLAGS and CFLAGS
 AFLAGS+=${patsubst %,-I%,${subst :, ,${IPATH}}}
 CFLAGS+=${patsubst %,-I%,${subst :, ,${IPATH}}}
-
-# The rule for building the object file from each C source file.
-${COMPILER}${SUFFIX}/%.o: %.c
-	${CC} ${CFLAGS} -D${COMPILER} -o ${@} ${<}
-
-# The rule for building the object file from each assembly source file.
-${COMPILER}${SUFFIX}/%.o: %.S
-	${CC} ${AFLAGS} -D${COMPILER} -o ${@} -c ${<}
-
-# The rule for creating an object library.
-${COMPILER}${SUFFIX}/%.a:
-	${AR} -cr ${@} ${^}
-
-# The rule for linking the application.
-${COMPILER}${SUFFIX}/%.axf:
-	${LD} -T ${SCATTERgcc_${notdir ${@:.axf=}}} --entry ${ENTRY_${notdir ${@:.axf=}}} ${LDFLAGSgcc_${notdir ${@:.axf=}}} ${LDFLAGS} -o ${@} $(filter %.o %.a, ${^}) '${LIBM}' '${LIBC}' '${LIBGCC}'
-	${OBJCOPY} -O binary ${@} ${@:.axf=.bin}
-
 
 # Where to find source files that do not live in this directory.
 VPATH=${ROOT}/boards/ek-lm4f120xl/drivers
@@ -96,28 +80,45 @@ VPATH+=${ROOT}/utils
 IPATH=${ROOT}/boards/ek-lm4f120xl
 IPATH+=${ROOT}
 
-# The default rule, which causes the Project Zero Example to be built.
-all: ${COMPILER}
-all: ${COMPILER}/threesixty-display.axf
-
-# The rule to clean out all the build products.
-clean:
-	@rm -rf ${COMPILER} ${wildcard *~}
-
-# The rule to create the target directory.
-${COMPILER}:
-	@mkdir -p ${COMPILER}
-
-# Rules for building the ThreeSixty Display.
-${COMPILER}/threesixty-display.axf: ${COMPILER}/threesixty-display.o
-${COMPILER}/threesixty-display.axf: ${COMPILER}/startup_${COMPILER}.o
-${COMPILER}/threesixty-display.axf: ${ROOT}/driverlib/${COMPILER}-cm4f/libdriver-cm4f.a
-${COMPILER}/threesixty-display.axf: threesixty-display.ld
 SCATTERgcc_threesixty-display=threesixty-display.ld
 ENTRY_threesixty-display=ResetISR
 CFLAGSgcc=-DTARGET_IS_BLIZZARD_RA2
 
-# Include the automatically generated dependency files.
+# The rule for building the object file from each C source file
+${OUT_DIR}/%.o: %.c
+	${CC} ${CFLAGS} -D${COMPILER} -o ${@} ${<}
+
+# The rule for building the object file from each assembly source file
+${OUT_DIR}/%.o: %.S
+	${CC} ${AFLAGS} -D${COMPILER} -o ${@} -c ${<}
+
+# The rule for creating an object library
+${OUT_DIR}/%.a:
+	${AR} -cr ${@} ${^}
+
+# The rule for linking the application
+${OUT_DIR}/%.axf:
+	${LD} -T ${SCATTERgcc_${notdir ${@:.axf=}}} --entry ${ENTRY_${notdir ${@:.axf=}}} ${LDFLAGSgcc_${notdir ${@:.axf=}}} ${LDFLAGS} -o ${@} $(filter %.o %.a, ${^}) '${LIBM}' '${LIBC}' '${LIBGCC}'
+	${OBJCOPY} -O binary ${@} ${@:.axf=.bin}
+
+# The default rule, which causes the project be built
+all: ${OUT_DIR}
+all: ${OUT_DIR}/threesixty-display.axf
+
+# The rule to create the output directory
+${OUT_DIR}:
+	mkdir -p ${OUT_DIR}
+
+# The rule to clean out all the build products
+clean:
+	@rm -rf ${OUT_DIR} ${wildcard *~}
+
+# Rules for building the ThreeSixty Display subproject
+${OUT_DIR}/threesixty-display.axf: ${OUT_DIR}/main.o
+${OUT_DIR}/threesixty-display.axf: ${OUT_DIR}/startup_${COMPILER}.o
+${OUT_DIR}/threesixty-display.axf: ${ROOT}/driverlib/${COMPILER}-cm4f/libdriver-cm4f.a
+
+# Include the automatically generated dependency files
 ifneq (${MAKECMDGOALS},clean)
--include ${wildcard ${COMPILER}/*.d} __dummy__
+-include ${wildcard ${OUT_DIR}/*.d} __dummy__
 endif

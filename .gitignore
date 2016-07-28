@@ -36,3 +36,6 @@
 # Debug files
 *.dSYM/
 *.su
+
+# Display subproject output files
+display/out/*
