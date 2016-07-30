@@ -2,7 +2,7 @@
 PART=LM4F120H5QR
 
 # The base directory for StellarisWare
-ROOT=../stellarisware
+STELLARISWARE_DIR=stellarisware
 
 COMPILER=gcc
 
@@ -73,23 +73,23 @@ AFLAGS+=${patsubst %,-I%,${subst :, ,${IPATH}}}
 CFLAGS+=${patsubst %,-I%,${subst :, ,${IPATH}}}
 
 # Where to find source files that do not live in this directory.
-VPATH=${ROOT}/boards/ek-lm4f120xl/drivers
-VPATH+=${ROOT}/utils
+VPATH=${STELLARISWARE_DIR}/boards/ek-lm4f120xl/drivers
+VPATH+=${STELLARISWARE_DIR}/utils
 
 # Where to find header files that do not live in the source directory.
-IPATH=${ROOT}/boards/ek-lm4f120xl
-IPATH+=${ROOT}
+IPATH=${STELLARISWARE_DIR}/boards/ek-lm4f120xl
+IPATH+=${STELLARISWARE_DIR}
 
-SCATTERgcc_threesixty-display=threesixty-display.ld
+SCATTERgcc_threesixty-display=src/threesixty-display.ld
 ENTRY_threesixty-display=ResetISR
 CFLAGSgcc=-DTARGET_IS_BLIZZARD_RA2
 
 # The rule for building the object file from each C source file
-${OUT_DIR}/%.o: %.c
+${OUT_DIR}/%.o: src/%.c
 	${CC} ${CFLAGS} -D${COMPILER} -o ${@} ${<}
 
 # The rule for building the object file from each assembly source file
-${OUT_DIR}/%.o: %.S
+${OUT_DIR}/%.o: src/%.S
 	${CC} ${AFLAGS} -D${COMPILER} -o ${@} -c ${<}
 
 # The rule for creating an object library
@@ -116,7 +116,7 @@ clean:
 # Rules for building the ThreeSixty Display subproject
 ${OUT_DIR}/threesixty-display.axf: ${OUT_DIR}/main.o
 ${OUT_DIR}/threesixty-display.axf: ${OUT_DIR}/startup_${COMPILER}.o
-${OUT_DIR}/threesixty-display.axf: ${ROOT}/driverlib/${COMPILER}-cm4f/libdriver-cm4f.a
+${OUT_DIR}/threesixty-display.axf: ${STELLARISWARE_DIR}/driverlib/${COMPILER}-cm4f/libdriver-cm4f.a
 
 # Include the automatically generated dependency files
 ifneq (${MAKECMDGOALS},clean)
