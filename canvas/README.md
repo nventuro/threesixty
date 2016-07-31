@@ -1,4 +1,4 @@
-# Display
+# canvas
 This is the display part of the project: the rotating board with the LEDs. This board is based on a [TI Stellaris Launchpad](http://www.ti.com/tool/ek-lm4f120xl), which has an LM4F120H5QR microcontroller.
 
 ## Dependencies

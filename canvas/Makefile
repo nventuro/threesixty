@@ -80,8 +80,8 @@ VPATH+=${STELLARISWARE_DIR}/utils
 IPATH=${STELLARISWARE_DIR}/boards/ek-lm4f120xl
 IPATH+=${STELLARISWARE_DIR}
 
-SCATTERgcc_threesixty-display=src/threesixty-display.ld
-ENTRY_threesixty-display=ResetISR
+SCATTERgcc_canvas=src/canvas.ld
+ENTRY_canvas=ResetISR
 CFLAGSgcc=-DTARGET_IS_BLIZZARD_RA2
 
 # The rule for building the object file from each C source file
@@ -103,7 +103,7 @@ ${OUT_DIR}/%.axf:
 
 # The default rule, which causes the project be built
 all: ${OUT_DIR}
-all: ${OUT_DIR}/threesixty-display.axf
+all: ${OUT_DIR}/canvas.axf
 
 # The rule to create the output directory
 ${OUT_DIR}:
@@ -113,10 +113,10 @@ ${OUT_DIR}:
 clean:
 	@rm -rf ${OUT_DIR} ${wildcard *~}
 
-# Rules for building the ThreeSixty Display subproject
-${OUT_DIR}/threesixty-display.axf: ${OUT_DIR}/main.o
-${OUT_DIR}/threesixty-display.axf: ${OUT_DIR}/startup_${COMPILER}.o
-${OUT_DIR}/threesixty-display.axf: ${STELLARISWARE_DIR}/driverlib/${COMPILER}-cm4f/libdriver-cm4f.a
+# Rules for building the canvas subproject
+${OUT_DIR}/canvas.axf: ${OUT_DIR}/main.o
+${OUT_DIR}/canvas.axf: ${OUT_DIR}/startup_${COMPILER}.o
+${OUT_DIR}/canvas.axf: ${STELLARISWARE_DIR}/driverlib/${COMPILER}-cm4f/libdriver-cm4f.a
 
 # Include the automatically generated dependency files
 ifneq (${MAKECMDGOALS},clean)

@@ -1,5 +1,2 @@
 # threesixty
-A wirelessly controlled LED propeller display.
-
-# [Display](https://github.com/nventuro/threesixty/tree/master/display)
-This is the display part of the project: the rotating board with the LEDs.
+A wirelessly controlled LED propeller display. The project is split into two subprojects: the [canvas](https://github.com/nventuro/threesixty/tree/master/canvas) (the rotating LED display), and the [painter](https://github.com/nventuro/threesixty/tree/master/painter) (the remote controller, which draws on the canvas).
