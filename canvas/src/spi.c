@@ -13,6 +13,7 @@
 #include <stdio.h>
 
 #include "assert.h"
+#include "misc.h"
 
 // Pin FSS goes down at the beginning of every 8 bit SPI transfer, and up when it ends.
 // Pin SPI_LONG_SS goes down at the same time as pin FSS, but only goes up when spi_transfer ends. 
@@ -25,7 +26,7 @@
 #define SPI_SS_STOP()  GPIOPinWrite(SPI_LONG_SS_PORT, SPI_LONG_SS, SPI_LONG_SS)
 
 static struct {
-    bool busy;
+    volatile bool busy;
 
     uint8_t *input;
     uint8_t *output;
@@ -87,13 +88,13 @@ void spi_init(bool cpol, bool cpha, uint32_t freq)
     }
     SSIConfigSetExpClk(SSI0_BASE, SysCtlClockGet(), mode, SSI_MODE_MASTER, freq, 8);
 
+    HWREG(SSI0_BASE + SSI_O_CR1) |= SSI_CR1_EOT;
+
     SSIEnable(SSI0_BASE);
 
     SSIIntRegister(SSI0_BASE, spi_ISR);
    
-    SSIIntClear(SSI0_BASE, SSI_RXTO);
-    SSIIntEnable(SSI0_BASE, SSI_RXTO);
-   
+    SSIIntDisable(SSI0_BASE, SSI_TXFF);  
     IntEnable(INT_SSI0);
 
     // Enable the LONG_SS pinS
@@ -107,30 +108,39 @@ void spi_init(bool cpol, bool cpha, uint32_t freq)
 
 bool spi_isBusy(void)
 {
-    return spi_data.busy;
+    bool is_busy;
+    
+    misc_enterCritical();
+    {        
+        is_busy = spi_data.busy;
+    }   
+    misc_exitCritical();
+
+    return is_busy;
 }
 
 void spi_Transfer(uint8_t *input, uint8_t *output, uint8_t length, spi_cb eot)
 {
-    //bool intsEnabled = SafeSei();
-    
     assert(!spi_data.busy, "spi: attempt to initiate a transfer while another is in progress.\n");        
-    
     assert(input != NULL, "spi: received NULL input pointer.\n");
-    
     assert (length > 0, "spi: length must be non-zero.\n");
-    
-    spi_data.busy = true;
+
+    misc_enterCritical();
+    {        
+        spi_data.busy = true;
+    }   
+    misc_exitCritical();
+
     spi_data.input = input;
     spi_data.output = output;
     spi_data.length = length;
     spi_data.eot = eot;
     spi_data.index = 0;
 
-    //SafeCli(intsEnabled);
-
     SPI_SS_START();
     spi_sendNewData();
+
+    SSIIntEnable(SSI0_BASE, SSI_TXFF);
 }
 
 static void spi_sendNewData(void)
@@ -159,8 +169,6 @@ static void spi_storeReceived(void)
 
 static void spi_ISR(void)
 {
-    SSIIntClear(SSI0_BASE, SSI_RXTO);
-
     spi_storeReceived();
 
     spi_data.index++;
@@ -169,6 +177,8 @@ static void spi_ISR(void)
     } else {
         SPI_SS_STOP();
         spi_data.busy = false;
+
+        SSIIntDisable(SSI0_BASE, SSI_TXFF);
         
         if (spi_data.eot != NULL) {
             spi_data.eot();    
