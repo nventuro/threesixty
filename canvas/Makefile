@@ -75,6 +75,7 @@ CFLAGS+=${patsubst %,-I%,${subst :, ,${IPATH}}}
 # Where to find source files that do not live in this directory.
 VPATH=${STELLARISWARE_DIR}/boards/ek-lm4f120xl/drivers
 VPATH+=${STELLARISWARE_DIR}/utils
+VPATH+=src
 
 # Where to find header files that do not live in the source directory.
 IPATH=${STELLARISWARE_DIR}/boards/ek-lm4f120xl
@@ -85,11 +86,11 @@ ENTRY_canvas=ResetISR
 CFLAGSgcc=-DTARGET_IS_BLIZZARD_RA2
 
 # The rule for building the object file from each C source file
-${OUT_DIR}/%.o: src/%.c
+${OUT_DIR}/%.o: %.c
 	${CC} ${CFLAGS} -D${COMPILER} -o ${@} ${<}
 
 # The rule for building the object file from each assembly source file
-${OUT_DIR}/%.o: src/%.S
+${OUT_DIR}/%.o: %.S
 	${CC} ${AFLAGS} -D${COMPILER} -o ${@} -c ${<}
 
 # The rule for creating an object library
@@ -116,6 +117,7 @@ clean:
 # Rules for building the canvas subproject
 ${OUT_DIR}/canvas.axf: ${OUT_DIR}/main.o
 ${OUT_DIR}/canvas.axf: ${OUT_DIR}/startup_${COMPILER}.o
+${OUT_DIR}/canvas.axf: ${OUT_DIR}/uartstdio.o
 ${OUT_DIR}/canvas.axf: ${STELLARISWARE_DIR}/driverlib/${COMPILER}-cm4f/libdriver-cm4f.a
 
 # Include the automatically generated dependency files

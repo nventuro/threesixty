@@ -2,6 +2,7 @@
 #include "inc/hw_memmap.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
+#include "utils/uartstdio.h"
 
 #include <stdbool.h>
 
@@ -15,6 +16,16 @@ int main(void)
     // Setup the system clock to run at 50 Mhz from PLL with crystal reference
     SysCtlClockSet(SYSCTL_SYSDIV_4|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|
                     SYSCTL_OSC_MAIN);
+
+    // Initialize the UART.
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+    GPIOPinConfigure(GPIO_PA0_U0RX);
+    GPIOPinConfigure(GPIO_PA1_U0TX);
+    GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+    UARTStdioInit(0);
+
+    // Hello!
+    UARTprintf("Hello, world!\n");
 
     // Enable and configure the GPIO port for the LED operation.
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
