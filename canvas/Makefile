@@ -81,6 +81,11 @@ VPATH+=src
 IPATH=${STELLARISWARE_DIR}/boards/ek-lm4f120xl
 IPATH+=${STELLARISWARE_DIR}
 
+SRC_PATH=src
+SOURCES := $(wildcard $(SRC_PATH)/*.c)
+OBJS := $(subst $(SRC_PATH),$(OUT_DIR),$(SOURCES:.c=.o))
+#OBJ_FILES := $(notdir $(OBJS))
+
 SCATTERgcc_canvas=src/canvas.ld
 ENTRY_canvas=ResetISR
 CFLAGSgcc=-DTARGET_IS_BLIZZARD_RA2
@@ -115,10 +120,7 @@ clean:
 	@rm -rf ${OUT_DIR} ${wildcard *~}
 
 # Rules for building the canvas subproject
-${OUT_DIR}/canvas.axf: ${OUT_DIR}/main.o
-${OUT_DIR}/canvas.axf: ${OUT_DIR}/spi.o
-${OUT_DIR}/canvas.axf: ${OUT_DIR}/assert.o
-${OUT_DIR}/canvas.axf: ${OUT_DIR}/startup_${COMPILER}.o
+${OUT_DIR}/canvas.axf: ${OBJS}
 ${OUT_DIR}/canvas.axf: ${OUT_DIR}/uartstdio.o
 ${OUT_DIR}/canvas.axf: ${STELLARISWARE_DIR}/driverlib/${COMPILER}-cm4f/libdriver-cm4f.a
 
