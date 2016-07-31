@@ -116,6 +116,8 @@ clean:
 
 # Rules for building the canvas subproject
 ${OUT_DIR}/canvas.axf: ${OUT_DIR}/main.o
+${OUT_DIR}/canvas.axf: ${OUT_DIR}/spi.o
+${OUT_DIR}/canvas.axf: ${OUT_DIR}/assert.o
 ${OUT_DIR}/canvas.axf: ${OUT_DIR}/startup_${COMPILER}.o
 ${OUT_DIR}/canvas.axf: ${OUT_DIR}/uartstdio.o
 ${OUT_DIR}/canvas.axf: ${STELLARISWARE_DIR}/driverlib/${COMPILER}-cm4f/libdriver-cm4f.a
