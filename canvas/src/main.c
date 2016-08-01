@@ -14,50 +14,40 @@
 #include <stdio.h>
 
 #include "spi.h"
-
-// Define pin to LED color mapping.
-#define RED_LED   GPIO_PIN_1
-#define BLUE_LED  GPIO_PIN_2
+#include "misc.h"
 
 static void init_console(void);
+static void spi_transfer_cb(void);
+
+uint32_t spi_count = 0;
+
+char write_buffer[] = "0123456789";
+char read_buffer[] = "9876543210";
 
 int main(void)
 {
     // Setup the system clock to run at 50 Mhz from PLL with crystal reference
     SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
 
-    init_console();
-    UARTprintf("Hello, world!\n");
+    misc_init();
 
-    // Enable and configure the GPIO port for the LED operation.
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, RED_LED | BLUE_LED);
+    init_console();
+    UARTprintf("threesixty-canvas up and running!\n");
 
     spi_init(false, false, 100000);
     IntMasterEnable();
 
-    char write_buffer[] = "Hello!";
-    char read_buffer[] = "Goodbye!";
+    spi_Transfer((uint8_t *) write_buffer, (uint8_t *) read_buffer, 10, spi_transfer_cb);
 
-    spi_Transfer(write_buffer, read_buffer, 7, NULL);
-
-    while (spi_isBusy()) {        
-    }
-
-    UARTprintf("Received: %s\n", read_buffer);
+    uint32_t start = misc_getSysMS();
 
     while (true) {
-        // Turn on the LED
-        GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED, RED_LED);
-
-        // Delay for a bit
-        SysCtlDelay(1000000);
-
-        // Turn on the LED
-        GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED, BLUE_LED);
-
-        // Delay for a bit
-        SysCtlDelay(1000000);
+        uint32_t now = misc_getSysMS();
+        if ((now - start) >= 10000) {
+            start = now;
+            UARTprintf("%u transfers per second\n", spi_count / 10);  
+            spi_count = 0;
+        }
     }
 }
 
@@ -69,4 +59,10 @@ static void init_console(void)
     GPIOPinConfigure(GPIO_PA1_U0TX);
     GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
     UARTStdioInit(0);
+}
+
+static void spi_transfer_cb(void)
+{
+    spi_count += 1;
+    spi_Transfer((uint8_t *) write_buffer, (uint8_t *) read_buffer, 10, spi_transfer_cb);
 }

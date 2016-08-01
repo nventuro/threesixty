@@ -28,8 +28,8 @@
 static struct {
     volatile bool busy;
 
-    uint8_t *input;
-    uint8_t *output;
+    const uint8_t *write;
+    uint8_t *read;
     uint8_t length;
     uint8_t index;
 
@@ -108,31 +108,19 @@ void spi_init(bool cpol, bool cpha, uint32_t freq)
 
 bool spi_isBusy(void)
 {
-    bool is_busy;
-    
-    misc_enterCritical();
-    {        
-        is_busy = spi_data.busy;
-    }   
-    misc_exitCritical();
-
-    return is_busy;
+    return spi_data.busy;
 }
 
-void spi_Transfer(uint8_t *input, uint8_t *output, uint8_t length, spi_cb eot)
+void spi_Transfer(const uint8_t *write, uint8_t *read, uint8_t length, spi_cb eot)
 {
     assert(!spi_data.busy, "spi: attempt to initiate a transfer while another is in progress.\n");        
-    assert(input != NULL, "spi: received NULL input pointer.\n");
-    assert (length > 0, "spi: length must be non-zero.\n");
+    assert(write != NULL, "spi: received NULL write pointer.\n");
+    assert(length > 0, "spi: length must be non-zero.\n");
 
-    misc_enterCritical();
-    {        
-        spi_data.busy = true;
-    }   
-    misc_exitCritical();
+    spi_data.busy = true;
 
-    spi_data.input = input;
-    spi_data.output = output;
+    spi_data.write = write;
+    spi_data.read = read;
     spi_data.length = length;
     spi_data.eot = eot;
     spi_data.index = 0;
@@ -148,7 +136,7 @@ static void spi_sendNewData(void)
     while (SSIBusy(SSI0_BASE)) {
     }
 
-    SSIDataPut(SSI0_BASE, spi_data.input[spi_data.index]);
+    SSIDataPut(SSI0_BASE, spi_data.write[spi_data.index]);
 }
 
 static void spi_storeReceived(void)
@@ -162,8 +150,8 @@ static void spi_storeReceived(void)
     // will wait until there is data in the receive FIFO before returning.
     SSIDataGet(SSI0_BASE, &read);
     
-    if (spi_data.output != NULL) {
-        spi_data.output[spi_data.index] = read;
+    if (spi_data.read != NULL) {
+        spi_data.read[spi_data.index] = read;
     }
 }
 
@@ -176,9 +164,9 @@ static void spi_ISR(void)
         spi_sendNewData();
     } else {
         SPI_SS_STOP();
-        spi_data.busy = false;
-
         SSIIntDisable(SSI0_BASE, SSI_TXFF);
+
+        spi_data.busy = false;
         
         if (spi_data.eot != NULL) {
             spi_data.eot();    

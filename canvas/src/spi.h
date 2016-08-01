@@ -16,21 +16,30 @@ typedef void (*spi_cb)(void);
 void spi_init(bool cpol, bool cpha, uint32_t freq);
 
 /**
- * @brief      Informs if the SPI module is busy, and unable to initiate a new
- *             transfer.
+ * @brief      Initiates an interrupt-driven, multibyte SPI data transfer. This
+ *             call is non-blocking: the transfer will end after the call
+ *             returns, so both buffers must persist until it actually finishes.
  *
- * @return     true if the module is busy, false otherwise.
+ *             This function can be safely called from an interrupt context, but
+ *             it is not thread-safe, nor reentrant: only one transfer can be
+ *             ongoing at a time.
+ *
+ * @param[in]  write   The write (TX) buffer. This must not be NULL.
+ * @param[out] read    The read (RX) buffer. If this is NULL, the received data
+ *                     is discarded.
+ * @param[in]  length  The number of bytes to transmit.
+ * @param[in]  eot     A callback to be called once the transmission finishes.
+ *                     At that point, spi_transfer can be called again. eot is
+ *                     executed from an interrupt context.
+ */
+void spi_Transfer(const uint8_t *write, uint8_t *read, uint8_t length, spi_cb eot);
+
+/**
+ * @brief      Informs if an SPI transfer is ongoing.
+ *
+ * @return     true if a transfer is in progress, false if the module is idle
+ *             and spi_transfer can be safely called.
  */
 bool spi_isBusy(void);
-
-void spi_Transfer(uint8_t *input, uint8_t *output, uint8_t length, spi_cb eot);
-// Initiates a SPI data transfer. length bytes from input are sent via SPI, and the data clocked in is stored in output.
-// When the transmission ends, the SPI module is ready for a new data transfer, and eot is called. eot and input must not be 
-// NULL, output can be NULL, in which case it is ignored. length must be non-zero. It is up to the user to ensure there's enough
-// memory in both input and output.
-// If spi_Transfer is called while there's already another transfer in progress, an error is thrown.
-
-// spi_Transfer can only be called if the SPI module isn't busy. spi_Transfer ensures the module won't be busy
-// by the time eot is called.
 
 #endif
