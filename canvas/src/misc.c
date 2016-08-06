@@ -18,9 +18,9 @@ static void misc_systickISR(void);
 
 void misc_init(void)
 {
-	SysTickIntRegister(misc_systickISR);
+    SysTickIntRegister(misc_systickISR);
 
-	SysTickPeriodSet(CPU_FREQ_HZ / 1000);
+    SysTickPeriodSet(CPU_FREQ_HZ / 1000);
 
     // Enable the SysTick Interrupt.
     SysTickIntEnable();
@@ -31,7 +31,7 @@ void misc_init(void)
 
 uint32_t misc_getSysMS(void)
 {
-	return misc_systick_ints;
+    return misc_systick_ints;
 }
 
 void misc_enterCritical(void)

@@ -16,7 +16,7 @@
 #include "misc.h"
 
 // Pin FSS goes down at the beginning of every 8 bit SPI transfer, and up when it ends.
-// Pin SPI_LONG_SS goes down at the same time as pin FSS, but only goes up when spi_transfer ends. 
+// Pin SPI_LONG_SS goes down at the same time as pin FSS, but only goes up when spi_transfer ends.
 // Depending on the device, connect the SS (CSN) line to either SS0 or SPI_LONG_SS.
 #define SPI_LONG_SS        GPIO_PIN_3
 #define SPI_LONG_SS_PORT   GPIO_PORTF_BASE
@@ -42,7 +42,7 @@ static void spi_ISR(void);
 
 void spi_init(bool cpol, bool cpha, uint32_t freq)
 {
-    // The SSI0 peripheral must be enabled for use. 
+    // The SSI0 peripheral must be enabled for use.
     SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI0);
 
     // For this example SSI0 is used with PortA[5:2]. GPIO port A needs to be enabled so these pins can be used.
@@ -93,8 +93,8 @@ void spi_init(bool cpol, bool cpha, uint32_t freq)
     SSIEnable(SSI0_BASE);
 
     SSIIntRegister(SSI0_BASE, spi_ISR);
-   
-    SSIIntDisable(SSI0_BASE, SSI_TXFF);  
+
+    SSIIntDisable(SSI0_BASE, SSI_TXFF);
     IntEnable(INT_SSI0);
 
     // Enable the LONG_SS pinS
@@ -102,9 +102,9 @@ void spi_init(bool cpol, bool cpha, uint32_t freq)
     GPIOPinTypeGPIOOutput(SPI_LONG_SS_PORT, SPI_LONG_SS);
 
     spi_data.busy = false;
-    
-    SPI_SS_STOP();          
-}   
+
+    SPI_SS_STOP();
+}
 
 bool spi_isBusy(void)
 {
@@ -113,7 +113,7 @@ bool spi_isBusy(void)
 
 void spi_Transfer(const uint8_t *write, uint8_t *read, uint8_t length, spi_cb eot)
 {
-    assert(!spi_data.busy, "spi: attempt to initiate a transfer while another is in progress.\n");        
+    assert(!spi_data.busy, "spi: attempt to initiate a transfer while another is in progress.\n");
     assert(write != NULL, "spi: received NULL write pointer.\n");
     assert(length > 0, "spi: length must be non-zero.\n");
 
@@ -149,7 +149,7 @@ static void spi_storeReceived(void)
     // Receive the data using the "blocking" Get function. This function
     // will wait until there is data in the receive FIFO before returning.
     SSIDataGet(SSI0_BASE, &read);
-    
+
     if (spi_data.read != NULL) {
         spi_data.read[spi_data.index] = read;
     }
@@ -167,9 +167,9 @@ static void spi_ISR(void)
         SSIIntDisable(SSI0_BASE, SSI_TXFF);
 
         spi_data.busy = false;
-        
+
         if (spi_data.eot != NULL) {
-            spi_data.eot();    
+            spi_data.eot();
         }
     }
 }

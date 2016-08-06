@@ -10,15 +10,14 @@
 typedef void (*nrf_PTXptr) (bool success, u8 *ackPayload, u8 length);
 typedef void (*nrf_PRXptr) (u8 *data, u8 length);
 
-typedef enum 
-{
-	PTX = 0,
-	PRX
+typedef enum {
+    PTX = 0,
+    PRX
 } nrf_Type;
 
 void nrf_Init (nrf_Type type);
 // Enables the nrf module in either PTX or PRX mode. This requires the RTI module to work, and interrupts to be enabled.
-// Additionally, the IRQ pin from the nrf must be connected to the IRQ pin on the HCS12, and nrf_irq_serv set on the 
+// Additionally, the IRQ pin from the nrf must be connected to the IRQ pin on the HCS12, and nrf_irq_serv set on the
 // correspoding position in the ivt.
 // Only Pipe 0 is used.
 
@@ -27,7 +26,7 @@ void nrf_Init (nrf_Type type);
 
 void nrf_Transmit (u8 *data, u8 length, nrf_PTXptr eot);
 // Initializes a transmission to Pipe 0. data points to a segment of length (which must be non-zero, and must not be greater than 32)
-// bytes, which will be transmitted. After the transmission ends, eot is called. success is true if an ACK packet was received 
+// bytes, which will be transmitted. After the transmission ends, eot is called. success is true if an ACK packet was received
 // from the PRX, and false if the maximum number of retransmissions have occured. If the PRX answers with payload, it is stored in ackPayload, and
 // length contains it's length.
 // ackPayload must be read before any call to any other nrf function is done.
@@ -54,4 +53,4 @@ void interrupt nrf_irq_Service (void);
 
 
 #endif
-	
+

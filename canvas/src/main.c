@@ -45,7 +45,7 @@ int main(void)
         uint32_t now = misc_getSysMS();
         if ((now - start) >= 10000) {
             start = now;
-            UARTprintf("%u transfers per second\n", spi_count / 10);  
+            UARTprintf("%u transfers per second\n", spi_count / 10);
             spi_count = 0;
         }
     }
