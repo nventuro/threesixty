@@ -1,18 +1,17 @@
 #include "assert.h"
 
 #include "inc/hw_types.h"
-
 #include "driverlib/interrupt.h"
 
-#include "utils/uartstdio.h"
+#include "console.h"
 
 void assert(bool condition, char *msg)
 {
     if (!condition) {
         IntMasterDisable();
 
-        UARTprintf("ASSERTION FAILED: ");
-        UARTprintf(msg);
+        console_printf("ASSERTION FAILED: ");
+        console_printf(msg);
 
         while (true) {
         }

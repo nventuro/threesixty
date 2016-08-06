@@ -8,16 +8,17 @@
 #include "driverlib/gpio.h"
 #include "driverlib/interrupt.h"
 
-#include "utils/uartstdio.h"
-
 #include <stdbool.h>
 #include <stdio.h>
 
 #include "spi.h"
+#include "console.h"
 #include "misc.h"
+#include "assert.h"
 
-static void init_console(void);
 static void spi_transfer_cb(void);
+
+static void gpio_isr(void);
 
 uint32_t spi_count = 0;
 
@@ -31,10 +32,18 @@ int main(void)
 
     misc_init();
 
-    init_console();
-    UARTprintf("threesixty-canvas up and running!\n");
+    console_init();
+    console_printf("threesixty-canvas up and running!\n");
 
     spi_init(false, false, 100000);
+
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+    GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4);
+
+    GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+    GPIOPortIntRegister(GPIO_PORTF_BASE, gpio_isr);
+    GPIOPinIntEnable(GPIO_PORTF_BASE, GPIO_PIN_4);
+
     IntMasterEnable();
 
     spi_Transfer((uint8_t *) write_buffer, (uint8_t *) read_buffer, 10, spi_transfer_cb);
@@ -45,24 +54,24 @@ int main(void)
         uint32_t now = misc_getSysMS();
         if ((now - start) >= 10000) {
             start = now;
-            UARTprintf("%u transfers per second\n", spi_count / 10);
+
+            console_printf("%u transfers per second\n", spi_count / 10);
             spi_count = 0;
         }
     }
-}
-
-static void init_console(void)
-{
-    // Initialize the UART.
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
-    GPIOPinConfigure(GPIO_PA0_U0RX);
-    GPIOPinConfigure(GPIO_PA1_U0TX);
-    GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
-    UARTStdioInit(0);
 }
 
 static void spi_transfer_cb(void)
 {
     spi_count += 1;
     spi_Transfer((uint8_t *) write_buffer, (uint8_t *) read_buffer, 10, spi_transfer_cb);
+}
+
+static void gpio_isr(void)
+{
+    GPIOPinIntClear(GPIO_PORTF_BASE, GPIO_PIN_4);
+
+    if (!GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4)) {
+        console_printf("Button press!\n");
+    }
 }
