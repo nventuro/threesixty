@@ -18,9 +18,9 @@
 // Pin FSS goes down at the beginning of every 8 bit SPI transfer, and up when it ends.
 // Pin SPI_LONG_SS goes down at the same time as pin FSS, but only goes up when spi_transfer ends.
 // Depending on the device, connect the SS (CSN) line to either SS0 or SPI_LONG_SS.
-#define SPI_LONG_SS        GPIO_PIN_3
-#define SPI_LONG_SS_PORT   GPIO_PORTF_BASE
-#define SPI_LONG_SS_PERIPH SYSCTL_PERIPH_GPIOF
+#define SPI_LONG_SS        GPIO_PIN_1
+#define SPI_LONG_SS_PORT   GPIO_PORTE_BASE
+#define SPI_LONG_SS_PERIPH SYSCTL_PERIPH_GPIOE
 
 #define SPI_SS_START() GPIOPinWrite(SPI_LONG_SS_PORT, SPI_LONG_SS, 0)
 #define SPI_SS_STOP()  GPIOPinWrite(SPI_LONG_SS_PORT, SPI_LONG_SS, SPI_LONG_SS)
