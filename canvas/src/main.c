@@ -17,26 +17,24 @@ uint32_t spi_count = 0;
 char write_buffer[] = "0123456789";
 char read_buffer[] = "9876543210";
 
+static void init(void);
 static void io_butt_cb(io_butt_t pressed);
 static void spi_transfer_cb(void);
 
+static void timer_init(void);
+static void timer_ISR(void);
+
+#include "driverlib/timer.h"
+
+#include "inc/hw_memmap.h"
+#include "inc/hw_timer.h"
+#include "inc/hw_ints.h"
+
 int main(void)
 {
-    // Setup the system clock to run at 50 Mhz from PLL with crystal reference
-    SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
+    init();
 
-    misc_init();
-
-    console_init();
-    console_printf("threesixty-canvas up and running!\n");
-
-    io_init();
-    io_registerButtonCallback(io_butt_cb);
-    io_led(IO_LED_BLUE, true);
-
-    spi_init(false, false, 100000);
-
-    IntMasterEnable();
+    timer_init();
 
     spi_Transfer((uint8_t *) write_buffer, (uint8_t *) read_buffer, 10, spi_transfer_cb);
 
@@ -53,6 +51,25 @@ int main(void)
     }
 }
 
+static void init(void)
+{
+    // Setup the system clock to run at 50 Mhz from PLL with crystal reference
+    SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
+
+    misc_init();
+
+    console_init();
+    console_printf("threesixty-canvas up and running!\n");
+
+    io_init();
+    io_registerButtonCallback(io_butt_cb);
+    io_led(IO_LED_BLUE, true);
+
+    spi_init(false, false, 100000);
+
+    IntMasterEnable();
+}
+
 static void io_butt_cb(io_butt_t pressed)
 {
     if (pressed == IO_BUTT_LEFT) {
@@ -66,4 +83,26 @@ static void spi_transfer_cb(void)
 {
     spi_count += 1;
     spi_Transfer((uint8_t *) write_buffer, (uint8_t *) read_buffer, 10, spi_transfer_cb);
+}
+
+static void timer_init(void)
+{
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
+
+    TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
+
+    TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet() / 10);
+
+    TimerIntRegister(TIMER0_BASE, TIMER_A, timer_ISR);
+    TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+    IntEnable(INT_TIMER0A);
+
+    TimerEnable(TIMER0_BASE, TIMER_A);
+}
+
+static void timer_ISR(void)
+{
+    TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+
+    console_printf("timer isr\n");
 }
