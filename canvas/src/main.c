@@ -7,28 +7,15 @@
 #include <stdio.h>
 
 #include "io.h"
-#include "spi.h"
 #include "console.h"
 #include "misc.h"
 #include "assert.h"
 
-uint32_t spi_count = 0;
-
-char write_buffer[] = "0123456789";
-char read_buffer[] = "9876543210";
-
 static void init(void);
 static void io_butt_cb(io_butt_t pressed);
-static void spi_transfer_cb(void);
 
 static void timer_init(void);
 static void timer_ISR(void);
-
-#include "driverlib/timer.h"
-
-#include "inc/hw_memmap.h"
-#include "inc/hw_timer.h"
-#include "inc/hw_ints.h"
 
 int main(void)
 {
@@ -36,18 +23,7 @@ int main(void)
 
     timer_init();
 
-    spi_Transfer((uint8_t *) write_buffer, (uint8_t *) read_buffer, 10, spi_transfer_cb);
-
-    uint32_t start = misc_getSysMS();
-
     while (true) {
-        uint32_t now = misc_getSysMS();
-        if ((now - start) >= 10000) {
-            start = now;
-
-            console_printf("%u transfers per second\n", spi_count / 10);
-            spi_count = 0;
-        }
     }
 }
 
@@ -65,8 +41,6 @@ static void init(void)
     io_registerButtonCallback(io_butt_cb);
     io_led(IO_LED_BLUE, true);
 
-    spi_init(false, false, 100000);
-
     IntMasterEnable();
 }
 
@@ -79,11 +53,11 @@ static void io_butt_cb(io_butt_t pressed)
     }
 }
 
-static void spi_transfer_cb(void)
-{
-    spi_count += 1;
-    spi_Transfer((uint8_t *) write_buffer, (uint8_t *) read_buffer, 10, spi_transfer_cb);
-}
+#include "driverlib/timer.h"
+
+#include "inc/hw_memmap.h"
+#include "inc/hw_timer.h"
+#include "inc/hw_ints.h"
 
 static void timer_init(void)
 {
