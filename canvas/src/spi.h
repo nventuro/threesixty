@@ -32,7 +32,7 @@ void spi_init(bool cpol, bool cpha, uint32_t freq);
  *                     At that point, spi_transfer can be called again. eot is
  *                     executed from an interrupt context.
  */
-void spi_Transfer(const uint8_t *write, uint8_t *read, uint8_t length, spi_cb eot);
+void spi_transfer(const uint8_t *write, uint8_t *read, uint8_t length, spi_cb eot);
 
 /**
  * @brief      Informs if an SPI transfer is ongoing.

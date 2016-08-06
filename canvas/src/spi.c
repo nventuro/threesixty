@@ -111,10 +111,10 @@ bool spi_isBusy(void)
     return spi_data.busy;
 }
 
-void spi_Transfer(const uint8_t *write, uint8_t *read, uint8_t length, spi_cb eot)
+void spi_transfer(const uint8_t *write, uint8_t *read, uint8_t length, spi_cb eot)
 {
-    assert(!spi_data.busy, "spi: attempt to initiate a transfer while another is in progress.\n");
-    assert(write != NULL, "spi: received NULL write pointer.\n");
+    assert(!spi_data.busy, "spi: attempt to initiate a transfer while another is in progress\n");
+    assert(write != NULL, "spi: received NULL write pointer\n");
     assert(length > 0, "spi: length must be non-zero.\n");
 
     spi_data.busy = true;

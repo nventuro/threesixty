@@ -20,7 +20,7 @@ void misc_init(void)
 {
     SysTickIntRegister(misc_systickISR);
 
-    SysTickPeriodSet(CPU_FREQ_HZ / 1000);
+    SysTickPeriodSet(CPU_FREQ_HZ / 1000); // 1 ms period
 
     // Enable the SysTick Interrupt.
     SysTickIntEnable();
@@ -32,6 +32,16 @@ void misc_init(void)
 uint32_t misc_getSysMS(void)
 {
     return misc_systick_ints;
+}
+
+void misc_busyWaitMS(uint32_t ms)
+{
+    uint32_t start = misc_getSysMS();
+
+    uint32_t now;
+    do {
+        now = misc_getSysMS();
+    } while ((now - start) > ms);
 }
 
 void misc_enterCritical(void)
