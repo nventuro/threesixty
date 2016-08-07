@@ -42,7 +42,7 @@ void io_init(void)
 
     // Unlock PF0 so we can change it to a GPIO input
     // Once we have enabled (unlocked) the commit register then re-lock it
-    // to prevent further changes.  PF0 is muxed with NMI thus a special case.
+    // to prevent further changes. PF0 is muxed with NMI thus a special case.
     HWREG(IO_GPIO_PORT + GPIO_O_LOCK) = GPIO_LOCK_KEY_DD;
     HWREG(IO_GPIO_PORT + GPIO_O_CR) |= 0x01;
     HWREG(IO_GPIO_PORT + GPIO_O_LOCK) = 0;

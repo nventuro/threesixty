@@ -10,6 +10,7 @@
 #include "console.h"
 #include "misc.h"
 #include "assert.h"
+#include "nrf24.h"
 
 static void init(void);
 static void io_butt_cb(io_butt_t pressed);
@@ -17,11 +18,15 @@ static void io_butt_cb(io_butt_t pressed);
 static void timer_init(void);
 static void timer_ISR(void);
 
+static void nrf_cb(bool success, uint8_t *ack_payload, uint8_t length);
+
 int main(void)
 {
     init();
 
-    timer_init();
+    uint8_t tx_data[8];
+
+    nrf24_transmit(tx_data, 8, nrf_cb);
 
     while (true) {
     }
@@ -39,9 +44,13 @@ static void init(void)
 
     io_init();
     io_registerButtonCallback(io_butt_cb);
-    io_led(IO_LED_BLUE, true);
+    io_led(IO_LED_BLUE, false);
+
+//    timer_init();
 
     IntMasterEnable();
+
+    nrf24_init(NRF24_TX);
 }
 
 static void io_butt_cb(io_butt_t pressed)
@@ -51,6 +60,11 @@ static void io_butt_cb(io_butt_t pressed)
     } else if (pressed == IO_BUTT_RIGHT) {
         console_printf("Right button pressed\n");
     }
+}
+
+static void nrf_cb(bool success, uint8_t *ack_payload, uint8_t length)
+{
+    console_printf("nrf cb! %u %u %u\n", success, ack_payload, length);
 }
 
 #include "driverlib/timer.h"

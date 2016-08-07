@@ -2,6 +2,7 @@
 
 #include "inc/hw_types.h"
 #include "inc/hw_memmap.h"
+#include "inc/hw_ints.h"
 #include "inc/hw_nvic.h"
 #include "inc/hw_gpio.h"
 
@@ -12,17 +13,18 @@
 #include "spi.h"
 #include "misc.h"
 #include "assert.h"
+#include "console.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-#define NRF24_IRQ_GPIO_PERIPH SYSCTL_PERIPH_GPIOF
-#define NRF24_IRQ_GPIO_PORT   GPIO_PORTF_BASE
-#define NRF24_IRQ_GPIO_PIN    GPIO_PIN_4
+#define NRF24_IRQ_GPIO_PERIPH SYSCTL_PERIPH_GPIOE
+#define NRF24_IRQ_GPIO_PORT   GPIO_PORTE_BASE
+#define NRF24_IRQ_GPIO_PIN    GPIO_PIN_2
 
-#define NRF24_CE_GPIO_PERIPH SYSCTL_PERIPH_GPIOF
-#define NRF24_CE_GPIO_PORT   GPIO_PORTF_BASE
-#define NRF24_CE_GPIO_PIN    GPIO_PIN_4
+#define NRF24_CE_GPIO_PERIPH SYSCTL_PERIPH_GPIOE
+#define NRF24_CE_GPIO_PORT   GPIO_PORTE_BASE
+#define NRF24_CE_GPIO_PIN    GPIO_PIN_3
 
 // SPI COMMANDS
 #define R_REGISTER(x) (x)
@@ -192,9 +194,11 @@ void nrf24_init(nrf24_mode_t mode)
 
     SysCtlPeripheralEnable(NRF24_IRQ_GPIO_PERIPH);
     GPIOPinTypeGPIOInput(NRF24_IRQ_GPIO_PORT, NRF24_IRQ_GPIO_PIN);
+    GPIOPadConfigSet(NRF24_IRQ_GPIO_PORT, NRF24_IRQ_GPIO_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
-    GPIOIntTypeSet(NRF24_IRQ_GPIO_PORT, NRF24_IRQ_GPIO_PIN, GPIO_RISING_EDGE);
+    GPIOIntTypeSet(NRF24_IRQ_GPIO_PORT, NRF24_IRQ_GPIO_PIN, GPIO_BOTH_EDGES);
     GPIOPortIntRegister(NRF24_IRQ_GPIO_PORT, nrf24_irqISR);
+    IntEnable(INT_GPIOE);
 
     SysCtlPeripheralEnable(NRF24_CE_GPIO_PERIPH);
     GPIOPinTypeGPIOOutput(NRF24_CE_GPIO_PORT, NRF24_CE_GPIO_PIN);
@@ -267,6 +271,8 @@ void nrf24_storeAckPayload(const uint8_t *data, uint8_t length)
 
 static void nrf24_initSequence(void)
 {
+    console_printf("nrf init step %u\n", nrf_data.init_step);
+
     switch (nrf_data.init_step) {
         // Device is in the Power Down state if there was a power cycle, or in some other state if the uC was reset.
         case 0:
@@ -458,12 +464,14 @@ static void nrf24_initSequence(void)
             nrf_data.init_step += 1;
             GPIOPinWrite(NRF24_CE_GPIO_PORT, NRF24_CE_GPIO_PIN, 0xFF);
 
+            nrf_data.spi_input_data[0] = R_REGISTER(CONFIG);
+            spi_transfer(nrf_data.spi_input_data, NULL, 2, nrf24_initSequence);
             break;
 
         case 17:
-            // The nRF is now configured and properly initialized
-            nrf_data.init = true;
+            console_printf("config: 0x%X 0x%X\n", nrf_data.spi_input_data[1], EN_CRC | CRC_2_BYTE | PWR_UP | ((nrf_data.mode == NRF24_RX) ? PRIM_RX : PRIM_TX));
 
+            nrf_data.init = true;
             break;
     }
 }
@@ -488,6 +496,8 @@ void nrf24_StoreAckDone(void)
 
 static void nrf24_irqISR(void)
 {
+    console_printf("nrf irq isr\n");
+
     // The nRF might be issuing an IRQ if it wasn't reset
     if (nrf_data.init != true) {
         GPIOPinIntDisable(NRF24_IRQ_GPIO_PORT, NRF24_IRQ_GPIO_PIN);
